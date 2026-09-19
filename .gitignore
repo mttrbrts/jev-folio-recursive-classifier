@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.cache/
+.env
+.DS_Store
+*.log
+*.jsonl
+agreement.md
