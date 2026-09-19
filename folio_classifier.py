@@ -28,7 +28,8 @@ TYPESAFE_API_URL = "https://api.typesafe.ai/v1/systemone"
 DEFAULT_MODEL = "jev-latest"
 MAX_CHOICE_OPTIONS = 255
 EPSILON = 1e-12
-DEFAULT_DOCUMENT_MAX_TOKENS = 2000
+DEFAULT_DOCUMENT_MAX_TOKENS = 500
+DEFAULT_LEAF_CONFIDENCE_THRESHOLD = 0.9
 
 RDF_ABOUT = "{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about"
 RDF_RESOURCE = "{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource"
@@ -51,6 +52,7 @@ class Candidate:
     path: tuple[str, ...]
     log_probability: float
     decisions: int
+    confidence: float = 0.0
 
     @property
     def score(self) -> float:
@@ -327,6 +329,7 @@ def _expand_from_answer(
             log_probability=candidate.log_probability
             + math.log(max(probability_multiplier * float(probabilities.get(option, 0.0)), EPSILON)),
             decisions=candidate.decisions + 1,
+            confidence=float(answer.get("confidence", probabilities.get(option, 0.0))),
         )
         for option, iri in sorted(
             option_to_iri.items(), key=lambda item: probabilities.get(item[0], 0.0), reverse=True
@@ -408,6 +411,7 @@ def classify(
     beam_width: int = 3,
     max_depth: int = 32,
     document_metadata: dict[str, int | None] | None = None,
+    leaf_confidence_threshold: float = DEFAULT_LEAF_CONFIDENCE_THRESHOLD,
     root_iri: str = FOLIO_AGREEMENTS_IRI,
     root_path_iris: tuple[str, ...] = (
         FOLIO_AGREEMENTS_IRI,
@@ -415,6 +419,7 @@ def classify(
 ) -> dict[str, Any]:
     beam = [Candidate(root_iri, (), 0.0, 0)]
     finished: list[Candidate] = []
+    early_stop = False
 
     for _ in range(max_depth):
         expandable = [candidate for candidate in beam if hierarchy.direct_children(candidate.node_iri)]
@@ -423,6 +428,16 @@ def classify(
             break
         expanded: list[Candidate] = []
         expanded.extend(_expand_candidates(client, hierarchy, document_markdown, expandable))
+        confident_leaves = [
+            candidate
+            for candidate in expanded
+            if not hierarchy.direct_children(candidate.node_iri)
+            and candidate.confidence >= leaf_confidence_threshold
+        ]
+        if confident_leaves:
+            finished.append(max(confident_leaves, key=lambda candidate: candidate.score))
+            early_stop = True
+            break
         beam = sorted(expanded, key=lambda candidate: candidate.score, reverse=True)[:beam_width]
 
     finalists = sorted(finished + beam, key=lambda candidate: candidate.score, reverse=True)
@@ -438,6 +453,9 @@ def classify(
         "path_score": winner.score,
         "beam_width": beam_width,
         "depth": len(winner.path),
+        "leaf_confidence": winner.confidence,
+        "leaf_confidence_threshold": leaf_confidence_threshold,
+        "early_stopped": early_stop,
         "api_metadata": client.metadata(),
         "document_context": document_metadata or {},
     }
@@ -457,6 +475,12 @@ def main() -> int:
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--beam-width", type=int, default=3)
     parser.add_argument("--max-depth", type=int, default=5)
+    parser.add_argument(
+        "--leaf-confidence-threshold",
+        type=float,
+        default=DEFAULT_LEAF_CONFIDENCE_THRESHOLD,
+        help="Stop when a leaf reaches this confidence; use a value above 1.0 to disable.",
+    )
     parser.add_argument(
         "--max-document-tokens",
         type=int,
@@ -528,6 +552,7 @@ def main() -> int:
             beam_width=args.beam_width,
             max_depth=args.max_depth,
             document_metadata=document_metadata,
+            leaf_confidence_threshold=args.leaf_confidence_threshold,
         )
     except (OSError, ET.ParseError, TypeSafeApiError, ValueError, KeyError) as error:
         parser.error(str(error))

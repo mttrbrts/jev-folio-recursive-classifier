@@ -106,6 +106,7 @@ class ClassifierTests(unittest.TestCase):
         self.assertEqual(result["api_metadata"]["request_count"], 2)
         self.assertEqual(result["api_metadata"]["input_tokens"], 200)
         self.assertEqual(result["api_metadata"]["total_latency_ms"], 25.0)
+        self.assertTrue(result["early_stopped"])
 
 
 if __name__ == "__main__":

@@ -73,6 +73,8 @@ The default maximum traversal depth is five levels below `Agreements`. Override 
 python3 folio_classifier.py --document agreement.md --beam-width 5 --max-depth 8
 ```
 
+By default, traversal stops when a retained leaf classification has confidence at least `0.9`. Change the threshold with `--leaf-confidence-threshold`; use a value above `1.0` to disable early stopping.
+
 The JSON output includes `api_metadata` with per-request latency, request count, HTTP status, input tokens, and output tokens. To include an estimated cost, provide the current model rates in USD per 1,000 tokens:
 
 ```bash

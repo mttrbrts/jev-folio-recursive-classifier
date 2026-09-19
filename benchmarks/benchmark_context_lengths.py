@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from folio_classifier import (
     DEFAULT_FOLIO_TREE_CACHE_PATH,
+    DEFAULT_LEAF_CONFIDENCE_THRESHOLD,
     DEFAULT_MODEL,
     FolioHierarchy,
     TypeSafeClient,
@@ -44,6 +45,7 @@ def run_benchmark(
     budgets: tuple[int, ...],
     beam_width: int,
     max_depth: int,
+    leaf_confidence_threshold: float,
     input_cost_per_1k: float | None,
     output_cost_per_1k: float | None,
 ) -> list[dict[str, Any]]:
@@ -64,6 +66,7 @@ def run_benchmark(
             limited_document,
             beam_width=beam_width,
             max_depth=max_depth,
+            leaf_confidence_threshold=leaf_confidence_threshold,
             document_metadata=document_metadata,
         )
         results.append(
@@ -115,6 +118,12 @@ def main() -> int:
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--beam-width", type=int, default=3)
     parser.add_argument("--max-depth", type=int, default=5)
+    parser.add_argument(
+        "--leaf-confidence-threshold",
+        type=float,
+        default=DEFAULT_LEAF_CONFIDENCE_THRESHOLD,
+        help="Stop when a leaf reaches this confidence; use a value above 1.0 to disable.",
+    )
     parser.add_argument("--folio-tree-cache", type=Path, default=DEFAULT_FOLIO_TREE_CACHE_PATH)
     parser.add_argument("--input-cost-per-1k", type=float)
     parser.add_argument("--output-cost-per-1k", type=float)
@@ -143,6 +152,7 @@ def main() -> int:
         DEFAULT_BUDGETS,
         args.beam_width,
         args.max_depth,
+        args.leaf_confidence_threshold,
         input_cost,
         output_cost,
     )
