@@ -107,3 +107,7 @@ The expected broad category is `Transactional Document`, though the recursive re
 - [FOLIO](https://github.com/alea-institute/FOLIO), CC BY 4.0
 - [TypeSafe System One API](https://docs.typesafe.ai/api)
 - [TypeSafe hierarchical classification cookbook](https://docs.typesafe.ai/cookbooks/hierarchical_classification)
+
+## License
+
+This project is licensed under the [Apache License 2.0](LICENSE).
