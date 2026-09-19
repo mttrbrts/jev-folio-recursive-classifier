@@ -58,7 +58,7 @@ Run the classifier seven times against the same document using 1,000, 2,500, 5,0
 ```bash
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python benchmark_context_lengths.py --document agreement.md
+.venv/bin/python benchmarks/benchmark_context_lengths.py --document agreement.md
 ```
 
 Using a virtual environment avoids the `externally-managed-environment` error from Homebrew or other system-managed Python installations. The `.venv` directory is ignored by Git.

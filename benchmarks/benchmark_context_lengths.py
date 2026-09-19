@@ -7,10 +7,13 @@ import argparse
 import getpass
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from folio_classifier import (
     DEFAULT_FOLIO_TREE_CACHE_PATH,
@@ -22,7 +25,7 @@ from folio_classifier import (
 )
 
 
-DEFAULT_BUDGETS = (1000, 2500, 5000, 10000, 25000, 50000, 0)
+DEFAULT_BUDGETS = (250, 500, 1000, 2500, 5000, 10000, 0)
 
 
 def _read_document(path: Path) -> str:
