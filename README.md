@@ -56,9 +56,12 @@ The output contains the selected FOLIO label and IRI, the complete path from `Do
 Run the classifier seven times against the same document using 1,000, 2,500, 5,000, 10,000, 25,000, 50,000, and all approximate document tokens:
 
 ```bash
-python3 -m pip install -r requirements.txt
-python3 benchmark_context_lengths.py --document agreement.md
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python benchmark_context_lengths.py --document agreement.md
 ```
+
+Using a virtual environment avoids the `externally-managed-environment` error from Homebrew or other system-managed Python installations. The `.venv` directory is ignored by Git.
 
 The script writes `context-benchmark.json` with each classification, FOLIO path, path score, request metadata, and estimated cost. It writes `context-benchmark.png`, plotting sent token length against path score and annotating each point with the resulting classification. The generated files are ignored by Git.
 
