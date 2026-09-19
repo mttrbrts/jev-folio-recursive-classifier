@@ -34,7 +34,7 @@ Save OCR'd markdown as a local file, then run:
 python3 folio_classifier.py --document agreement.md
 ```
 
-The CLI sends the first approximately 2,000 document tokens by default. Change the limit with `--max-document-tokens`, or use `0` to send the complete document:
+The CLI sends the first approximately 500 document tokens by default. Change the limit with `--max-document-tokens`, or use `0` to send the complete document:
 
 ```bash
 python3 folio_classifier.py --document agreement.md --max-document-tokens 4000
@@ -53,7 +53,7 @@ The output contains the selected FOLIO label and IRI, the complete path from `Do
 
 ## Context-length benchmark
 
-Run the classifier seven times against the same document using 1,000, 2,500, 5,000, 10,000, 25,000, 50,000, and all approximate document tokens:
+Run the classifier seven times against the same document using 250, 500, 1,000, 2,500, 5,000, 10,000, and all approximate document tokens:
 
 ```bash
 python3 -m venv .venv
@@ -67,7 +67,7 @@ The script writes `context-benchmark.json` with each classification, FOLIO path,
 
 Useful options:
 
-The default maximum traversal depth is five levels below `Agreements`. Override it explicitly when needed:
+The defaults are a beam width of `3`, a maximum traversal depth of five levels below `Agreements`, and a leaf confidence threshold of `0.9`. Override them explicitly when needed:
 
 ```bash
 python3 folio_classifier.py --document agreement.md --beam-width 5 --max-depth 8
