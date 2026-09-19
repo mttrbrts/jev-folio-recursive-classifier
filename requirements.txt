@@ -1,1 +1,2 @@
-# The classifier uses only the Python standard library.
+# The classifier itself uses the Python standard library; the benchmark plot uses matplotlib.
+matplotlib

@@ -51,6 +51,17 @@ pbpaste | python3 folio_classifier.py
 
 The output contains the selected FOLIO label and IRI, the complete path from `Document Types`, the beam width, and a length-normalized `path_score`. This is a traversal score, not TypeSafe's single-question confidence value.
 
+## Context-length benchmark
+
+Run the classifier seven times against the same document using 1,000, 2,500, 5,000, 10,000, 25,000, 50,000, and all approximate document tokens:
+
+```bash
+python3 -m pip install -r requirements.txt
+python3 benchmark_context_lengths.py --document agreement.md
+```
+
+The script writes `context-benchmark.json` with each classification, FOLIO path, path score, request metadata, and estimated cost. It writes `context-benchmark.png`, plotting sent token length against path score and annotating each point with the resulting classification. The generated files are ignored by Git.
+
 Useful options:
 
 The default maximum traversal depth is five levels below `Agreements`. Override it explicitly when needed:

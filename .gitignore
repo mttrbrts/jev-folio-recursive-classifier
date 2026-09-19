@@ -9,3 +9,5 @@ env/
 *.log
 *.jsonl
 agreement.md
+context-benchmark.json
+context-benchmark.png
