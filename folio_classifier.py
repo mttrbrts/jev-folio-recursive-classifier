@@ -8,6 +8,7 @@ import getpass
 import json
 import math
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -27,6 +28,7 @@ TYPESAFE_API_URL = "https://api.typesafe.ai/v1/systemone"
 DEFAULT_MODEL = "jev-latest"
 MAX_CHOICE_OPTIONS = 255
 EPSILON = 1e-12
+DEFAULT_DOCUMENT_MAX_TOKENS = 2000
 
 RDF_ABOUT = "{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about"
 RDF_RESOURCE = "{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource"
@@ -273,6 +275,35 @@ def _best_probability(answer: dict[str, Any], option: str) -> float:
     return float(probabilities.get(option, 0.0))
 
 
+def estimate_tokens(text: str) -> int:
+    """Estimate tokens without adding a tokenizer dependency."""
+    return len(re.findall(r"\w+|[^\w\s]", text, flags=re.UNICODE))
+
+
+def limit_document_context(document_markdown: str, max_tokens: int | None) -> tuple[str, dict[str, int | None]]:
+    """Keep the first approximate tokens of the OCR document."""
+    original_tokens = estimate_tokens(document_markdown)
+    if max_tokens is None or max_tokens <= 0 or original_tokens <= max_tokens:
+        return document_markdown, {
+            "original_characters": len(document_markdown),
+            "sent_characters": len(document_markdown),
+            "original_token_estimate": original_tokens,
+            "sent_token_estimate": original_tokens,
+            "max_document_tokens": max_tokens,
+        }
+
+    token_matches = list(re.finditer(r"\w+|[^\w\s]", document_markdown, flags=re.UNICODE))
+    end = token_matches[max_tokens - 1].end()
+    limited = document_markdown[:end]
+    return limited, {
+        "original_characters": len(document_markdown),
+        "sent_characters": len(limited),
+        "original_token_estimate": original_tokens,
+        "sent_token_estimate": estimate_tokens(limited),
+        "max_document_tokens": max_tokens,
+    }
+
+
 def _candidate_options(
     hierarchy: FolioHierarchy,
     candidate: Candidate,
@@ -376,6 +407,7 @@ def classify(
     document_markdown: str,
     beam_width: int = 3,
     max_depth: int = 32,
+    document_metadata: dict[str, int | None] | None = None,
     root_iri: str = FOLIO_AGREEMENTS_IRI,
     root_path_iris: tuple[str, ...] = (
         FOLIO_AGREEMENTS_IRI,
@@ -407,6 +439,7 @@ def classify(
         "beam_width": beam_width,
         "depth": len(winner.path),
         "api_metadata": client.metadata(),
+        "document_context": document_metadata or {},
     }
 
 
@@ -424,6 +457,12 @@ def main() -> int:
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--beam-width", type=int, default=3)
     parser.add_argument("--max-depth", type=int, default=5)
+    parser.add_argument(
+        "--max-document-tokens",
+        type=int,
+        default=DEFAULT_DOCUMENT_MAX_TOKENS,
+        help="Approximate maximum OCR document tokens sent as context; use 0 for unlimited.",
+    )
     parser.add_argument("--folio-owl-url", default=FOLIO_OWL_URL)
     parser.add_argument(
         "--folio-cache",
@@ -468,6 +507,9 @@ def main() -> int:
 
     try:
         document_markdown = _read_document(args.document)
+        document_markdown, document_metadata = limit_document_context(
+            document_markdown, args.max_document_tokens
+        )
         hierarchy = FolioHierarchy.load_cached_or_refresh(
             cache_path=args.folio_cache,
             tree_cache_path=args.folio_tree_cache,
@@ -485,6 +527,7 @@ def main() -> int:
             document_markdown,
             beam_width=args.beam_width,
             max_depth=args.max_depth,
+            document_metadata=document_metadata,
         )
     except (OSError, ET.ParseError, TypeSafeApiError, ValueError, KeyError) as error:
         parser.error(str(error))

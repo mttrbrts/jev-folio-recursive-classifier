@@ -34,6 +34,15 @@ Save OCR'd markdown as a local file, then run:
 python3 folio_classifier.py --document agreement.md
 ```
 
+The CLI sends the first approximately 2,000 document tokens by default. Change the limit with `--max-document-tokens`, or use `0` to send the complete document:
+
+```bash
+python3 folio_classifier.py --document agreement.md --max-document-tokens 4000
+python3 folio_classifier.py --document agreement.md --max-document-tokens 0
+```
+
+The token count is a deterministic approximation based on words and punctuation; the output reports both the original and sent estimates under `document_context`.
+
 Or pipe the document without creating a persistent input file:
 
 ```bash
