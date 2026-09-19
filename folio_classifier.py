@@ -436,6 +436,7 @@ def classify(
         ]
         if confident_leaves:
             finished.append(max(confident_leaves, key=lambda candidate: candidate.score))
+            beam = []
             early_stop = True
             break
         beam = sorted(expanded, key=lambda candidate: candidate.score, reverse=True)[:beam_width]

@@ -102,6 +102,7 @@ class ClassifierTests(unittest.TestCase):
           root_path_iris=(FOLIO_DOCUMENT_TYPES_IRI,),
         )
         self.assertEqual(result["iri"], "https://folio.example/services")
+        self.assertNotEqual(result["label"], "Document Types")
         self.assertEqual([item["label"] for item in result["path"]], ["Document Types", "Transactional Document", "Services Agreement"])
         self.assertEqual(result["api_metadata"]["request_count"], 2)
         self.assertEqual(result["api_metadata"]["input_tokens"], 200)
